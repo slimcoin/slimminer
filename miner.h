@@ -156,6 +156,10 @@ extern int scanhash_scrypt(int thr_id, uint32_t *pdata,
 	unsigned char *scratchbuf, const uint32_t *ptarget,
 	uint32_t max_nonce, unsigned long *hashes_done);
 
+//DCRYPT
+extern void imaPrint();
+//DCRYPT
+
 struct thr_info {
 	int		id;
 	pthread_t	pth;

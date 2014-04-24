@@ -768,16 +768,19 @@ static void *miner_thread(void *userdata)
     hashes_done = 0;
     gettimeofday(&tv_start, NULL);
 
+    printf("TESTS\n");
     /* scan nonces for a proof-of-work hash */
-    switch (opt_algo) {
+    switch (opt_algo)
+    {
     case ALGO_SCRYPT:
-      rc = scanhash_scrypt(thr_id, work.data, scratchbuf, work.target,
-                           max_nonce, &hashes_done);
+      rc = scanhash_scrypt(thr_id, work.data, scratchbuf, work.target, max_nonce, &hashes_done);
       break;
 
     case ALGO_SHA256D:
-      rc = scanhash_sha256d(thr_id, work.data, work.target,
-                            max_nonce, &hashes_done);
+      rc = scanhash_sha256d(thr_id, work.data, work.target, max_nonce, &hashes_done);
+      break;
+
+    case ALGO_DCRYPT:
       break;
 
     default:
@@ -788,19 +791,22 @@ static void *miner_thread(void *userdata)
     /* record scanhash elapsed time */
     gettimeofday(&tv_end, NULL);
     timeval_subtract(&diff, &tv_end, &tv_start);
-    if (diff.tv_usec || diff.tv_sec) {
+    if(diff.tv_usec || diff.tv_sec) 
+    {
       pthread_mutex_lock(&stats_lock);
       thr_hashrates[thr_id] =
         hashes_done / (diff.tv_sec + 1e-6 * diff.tv_usec);
       pthread_mutex_unlock(&stats_lock);
     }
-    if (!opt_quiet) {
-      sprintf(s, thr_hashrates[thr_id] >= 1e6 ? "%.0f" : "%.2f",
-              1e-3 * thr_hashrates[thr_id]);
-      applog(LOG_INFO, "thread %d: %lu hashes, %s khash/s",
-             thr_id, hashes_done, s);
+
+    if(!opt_quiet) 
+    {
+      sprintf(s, thr_hashrates[thr_id] >= 1e6 ? "%.0f" : "%.2f", 1e-3 * thr_hashrates[thr_id]);
+      applog(LOG_INFO, "thread %d: %lu hashes, %s khash/s", thr_id, hashes_done, s);
     }
-    if (opt_benchmark && thr_id == opt_n_threads - 1) {
+
+    if(opt_benchmark && thr_id == opt_n_threads - 1) 
+    {
       double hashrate = 0.;
       for (i = 0; i < opt_n_threads && thr_hashrates[i]; i++)
         hashrate += thr_hashrates[i];
@@ -811,7 +817,7 @@ static void *miner_thread(void *userdata)
     }
 
     /* if nonce found, submit work */
-    if (rc && !opt_benchmark && !submit_work(mythr, &work))
+    if(rc && !opt_benchmark && !submit_work(mythr, &work))
       break;
   }
 
