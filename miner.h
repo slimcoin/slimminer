@@ -166,10 +166,6 @@ extern int scanhash_scrypt(int thr_id, uint32_t *pdata,
 	unsigned char *scratchbuf, const uint32_t *ptarget,
 	uint32_t max_nonce, unsigned long *hashes_done);
 
-//DCRYPT
-extern u32int *dcrypt(const uint8_t *data, size_t data_sz, uint8_t *hash_digest);
-//DCRYPT
-
 struct thr_info {
 	int		id;
 	pthread_t	pth;

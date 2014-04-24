@@ -7,7 +7,8 @@
 
 #include "dcrypt_sha256.h"
 
-static void digest_to_string(u8int *hash_digest, u8int *string)
+//static void digest_to_string(u8int *hash_digest, u8int *string)
+void digest_to_string(u8int *hash_digest, u8int *string)
 {
   register u8int tmp_val;
 

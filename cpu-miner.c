@@ -37,6 +37,7 @@
 #include <curl/curl.h>
 #include "compat.h"
 #include "miner.h"
+#include "dcrypt.h"
 
 #define PROGRAM_NAME		"minerd"
 #define LP_SCANTIME		60
@@ -108,7 +109,7 @@ enum sha256_algos {
 
 static const char *algo_names[] = {
   [ALGO_SCRYPT]		= "scrypt",
-  [ALGO_SHA256D]		= "sha256d",
+  [ALGO_SHA256D]	= "sha256d",
   [ALGO_DCRYPT]		= "dcrypt"
 };
 
@@ -129,7 +130,7 @@ int opt_timeout = 270;
 static int opt_scantime = 5;
 static json_t *opt_config;
 static const bool opt_time = true;
-static enum sha256_algos opt_algo = ALGO_SCRYPT;
+static enum sha256_algos opt_algo = ALGO_DCRYPT;
 static int opt_n_threads;
 static int num_processors;
 static char *rpc_url;
@@ -167,7 +168,8 @@ static char const usage[] = "\
 Usage: " PROGRAM_NAME " [OPTIONS]\n\
 Options:\n\
   -a, --algo=ALGO       specify the algorithm to use\n\
-                          scrypt    scrypt(1024, 1, 1) (default)\n\
+                          dcrypt    Dcrypt (default)\n\
+                          scrypt    scrypt(1024, 1, 1)\n\
                           sha256d   SHA-256d\n\
   -o, --url=URL         URL of mining server\n\
   -O, --userpass=U:P    username:password pair for mining server\n\
@@ -665,7 +667,7 @@ static void stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
     free(xnonce2str);
   }
 
-  if (opt_algo == ALGO_SCRYPT)
+  if(opt_algo == ALGO_SCRYPT)
     diff_to_target(work->target, sctx->job.diff / 65536.0);
   else
     diff_to_target(work->target, sctx->job.diff);
@@ -699,7 +701,7 @@ static void *miner_thread(void *userdata)
     affine_to_cpu(thr_id, thr_id % num_processors);
   }
 	
-  if (opt_algo == ALGO_SCRYPT)
+  if(opt_algo == ALGO_SCRYPT)
     scratchbuf = scrypt_buffer_alloc();
 
   for(;;)
@@ -780,6 +782,7 @@ static void *miner_thread(void *userdata)
       break;
 
     case ALGO_DCRYPT:
+      printf("THIS IS DCRYPT hashing!\n");
       break;
 
     default:
@@ -1041,9 +1044,9 @@ static void parse_arg (int key, char *arg)
 
   switch(key) {
   case 'a':
-    for (i = 0; i < ARRAY_SIZE(algo_names); i++) {
-      if (algo_names[i] &&
-          !strcmp(arg, algo_names[i])) {
+    for (i = 0; i < ARRAY_SIZE(algo_names); i++) 
+    {
+      if(algo_names[i] && !strcmp(arg, algo_names[i])) {
         opt_algo = i;
         break;
       }
@@ -1245,18 +1248,20 @@ static void parse_cmdline(int argc, char *argv[])
 {
   int key;
 
-  while (1) {
+  for(;;) 
+  {
 #if HAVE_GETOPT_LONG
     key = getopt_long(argc, argv, short_options, options, NULL);
 #else
     key = getopt(argc, argv, short_options);
 #endif
-    if (key < 0)
+    if(key < 0)
       break;
 
     parse_arg(key, optarg);
   }
-  if (optind < argc) {
+  if(optind < argc) 
+  {
     fprintf(stderr, "%s: unsupported non-option argument '%s'\n",
 			argv[0], argv[optind]);
     show_usage_and_exit(1);
@@ -1286,7 +1291,6 @@ static void signal_handler(int sig)
 
 int main(int argc, char *argv[])
 {
-  dcrypt(0, 0, 0);
   struct thr_info *thr;
   long flags;
   int i;

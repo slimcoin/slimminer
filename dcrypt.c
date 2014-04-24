@@ -2,6 +2,7 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <string.h>
 #include <stdlib.h>
 #include <math.h>          //pow
 
@@ -145,10 +146,9 @@ uint64 mix_hashed_nums(uint8_t *hashed_nums, const uint8_t *unhashedData, size_t
   return count * SHA256_LEN + unhashed_sz;
 }
 
-u32int *dcrypt(const uint8_t *data, size_t data_sz, uint8_t *hash_digest)
+void dcrypt(const uint8_t *data, size_t data_sz, uint8_t *hash_digest, u32int *hashRet)
 {
   uint8_t hashed_nums[SHA256_LEN + 1], *mix_hash;
-  u32int hash[8];
 
   bool allocDigest = false;
   if(!hash_digest)
@@ -163,7 +163,7 @@ u32int *dcrypt(const uint8_t *data, size_t data_sz, uint8_t *hash_digest)
   uint64 mix_hash_len = mix_hashed_nums(hashed_nums, data, data_sz, &mix_hash, hash_digest);
 
   //apply the final hash to the output
-  sha256((const uint8_t*)mix_hash, mix_hash_len, &hash);
+  sha256((const uint8_t*)mix_hash, mix_hash_len, hashRet);
 
   free(mix_hash);
 
@@ -171,6 +171,114 @@ u32int *dcrypt(const uint8_t *data, size_t data_sz, uint8_t *hash_digest)
     free(hash_digest);
 
   //sucess
-  return hash;
+  return;
 }
 
+int scanhash_dcrypt(int thr_id, uint32_t *pdata,
+                    unsigned char *digest, const uint32_t *ptarget,
+                    uint32_t max_nonce, unsigned long *hashes_done)
+{
+  uint32_t block[20], hash[8];
+  uint32_t nNonce = pdata[19] - 1;
+  const uint32_t Htarg = ptarget[7]; //the last element in the target is the first 32 bits of the target
+  int i;
+	
+  //i am hashing pdata's 80 bytes
+  //copy the block (first 80 bytes of pdata) into block
+  memcpy(block, pdata, 80);
+
+  do
+  {
+    //increment nNonce
+    block[19] = ++nNonce;
+		
+    dcrypt((u8int*)block, 80, digest, hash);
+
+    //hash[7] <= Htarg just compares the first 32 bits of the hash with the target
+    // full_test fully compares the entire hash with the entire target
+    if(hash[7] <= Htarg && fulltest(hash, ptarget)) 
+    {
+      *hashes_done = nNonce - pdata[19] + 1;
+      pdata[19] = block[19];
+
+      //found a hash!
+      return 1;
+    }
+
+  }while(nNonce < max_nonce);
+  //}while(nNonce < max_nonce && !work_restart[thr_id].restart);
+	
+  *hashes_done = nNonce - pdata[19] + 1;
+  pdata[19] = nNonce;
+
+  //No luck yet
+  return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////
+//////////////////// Various tests
+////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Tests the comparison to two hashes
+
+  //Hash the word "Dog" with Dcrypt and strinify the hash
+  u32int ret[8];
+  char string[65];
+  dcrypt("Dog", 3, 0, ret);
+  digest_to_string((u8int*)ret, string);
+  printf("String is %s\n", string);
+
+  //hash the word "Doge" with Dcrypt and stringify the hash
+  u32int ret2[8];
+  char string2[65];
+  dcrypt("Doge", 4, 0, ret2);
+  digest_to_string((u8int*)ret2, string2);
+  printf("String2 is %s\n", string2);
+
+  //compare the last elements, which correspond the the uint256's first 32 bytes
+  if(ret[7] < ret2[7])
+    printf("String1 is smaller %08x < %08x\n", ret[7], ret2[7]);
+  else
+    printf("String1 is greater %08x >= %08x\n", ret[7], ret2[7]);
+
+  //Apply the full test to make sure
+  printf("Full test returns %d\n", fulltest(ret2, ret));
+
+ */
+
+/* Tests the scan feature of dcrypt
+  u8int digest[DCRYPT_DIGEST_LENGTH], string[65], strTarget[65];
+  unsigned long hDone;
+  u32int pdata[20], retHash[8], target[8];
+
+  //fill pdata with something
+  memset(pdata, 0xff, 20 * sizeof(u32int));
+  pdata[19] = 0; //element 19 is the beginning of where nNonce begins
+
+  //fill the target with 1's
+  memset(target, 0xff, 8 * sizeof(u32int));
+  //the last element is the uint256's first 32 bits, set the target to 0x00000ffffffffff....
+  target[7] = 0x000ffff;
+
+  //scan for them hashes
+  scanhash_dcrypt(0, pdata, digest, target, -1, &hDone);
+
+  //Get the hash of pdata
+  dcrypt((u8int*)pdata, 80, digest, retHash);
+
+  //stringify the returned hash and the target
+  digest_to_string((u8int*)retHash, string);
+  digest_to_string((u8int*)target, strTarget);
+
+  printf("  Hash is %s %08x\n", string, retHash[7]);
+  printf("Target is %s %08x\n", strTarget, target[7]);
+  printf("Nonce %d Hashes Done %ld\n", pdata[19], hDone);
+ */
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////
+//////////////////// Various tests
+////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
