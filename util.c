@@ -35,16 +35,6 @@
 #include "miner.h"
 #include "elist.h"
 
-//I need these
-typedef unsigned long long  uint64;
-typedef          long long  int64;
-typedef unsigned int        u32int;
-typedef          int        s32int;
-typedef unsigned short      u16int;
-typedef          short      s16int;
-typedef unsigned char       u8int;
-typedef          char       s8int;
-
 struct data_buffer {
   void  *buf;
   size_t  len;

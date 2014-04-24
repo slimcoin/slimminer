@@ -96,6 +96,12 @@ AC_CHECK_LIB([pthread], [pthread_create], PTHREAD_LIBS="-lpthread",
       AC_CHECK_LIB([pthreadGC], [pthread_create], PTHREAD_LIBS="-lpthreadGC"
 ))))
 
+#check for crypto
+AC_CHECK_LIB([crypto], [SHA256_Init], OPENSSL_LIBS="-lcrypto", [AC_MSG_ERROR([SHA256_Init was not found in openssl])])
+
+#check for math
+AC_CHECK_LIB([m], [pow], MATH_LIBS="-lm", [AC_MSG_ERROR([pow was not found in math libs])])
+
 AM_CONDITIONAL([WANT_JANSSON], [test x$request_jansson = xtrue])
 AM_CONDITIONAL([HAVE_WINDOWS], [test x$have_win32 = xtrue])
 AM_CONDITIONAL([ARCH_x86], [test x$have_x86 = xtrue])
@@ -115,6 +121,8 @@ LIBCURL_CHECK_CONFIG(, 7.15.2, ,
 AC_SUBST(JANSSON_LIBS)
 AC_SUBST(PTHREAD_FLAGS)
 AC_SUBST(PTHREAD_LIBS)
+AC_SUBST(OPENSSL_LIBS)
+AC_SUBST(MATH_LIBS)
 AC_SUBST(WS2_LIBS)
 
 AC_CONFIG_FILES([

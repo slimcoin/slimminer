@@ -768,7 +768,6 @@ static void *miner_thread(void *userdata)
     hashes_done = 0;
     gettimeofday(&tv_start, NULL);
 
-    printf("TESTS\n");
     /* scan nonces for a proof-of-work hash */
     switch (opt_algo)
     {
@@ -1287,6 +1286,7 @@ static void signal_handler(int sig)
 
 int main(int argc, char *argv[])
 {
+  dcrypt(0, 0, 0);
   struct thr_info *thr;
   long flags;
   int i;

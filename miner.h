@@ -36,6 +36,16 @@ void *alloca (size_t);
 # endif
 #endif
 
+//I need these
+typedef unsigned long long  uint64;
+typedef          long long  int64;
+typedef unsigned int        u32int;
+typedef          int        s32int;
+typedef unsigned short      u16int;
+typedef          short      s16int;
+typedef unsigned char       u8int;
+typedef          char       s8int;
+
 #ifdef HAVE_SYSLOG_H
 #include <syslog.h>
 #else
@@ -157,7 +167,7 @@ extern int scanhash_scrypt(int thr_id, uint32_t *pdata,
 	uint32_t max_nonce, unsigned long *hashes_done);
 
 //DCRYPT
-extern void imaPrint();
+extern u32int *dcrypt(const uint8_t *data, size_t data_sz, uint8_t *hash_digest);
 //DCRYPT
 
 struct thr_info {

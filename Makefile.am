@@ -16,7 +16,7 @@ dist_man_MANS = minerd.1
 
 minerd_SOURCES = elist.h miner.h compat.h \
 cpu-miner.c util.c \
-sha2.c scrypt.c dcrypt.c
+sha2.c scrypt.c dcrypt.c dcrypt_sha256.c
 if ARCH_x86
 minerd_SOURCES += sha2-x86.S scrypt-x86.S
 endif
@@ -27,5 +27,5 @@ if ARCH_ARM
 minerd_SOURCES += sha2-arm.S scrypt-arm.S
 endif
 minerd_LDFLAGS = $(PTHREAD_FLAGS)
-minerd_LDADD = @LIBCURL@ @JANSSON_LIBS@ @PTHREAD_LIBS@ @WS2_LIBS@
+minerd_LDADD = @LIBCURL@ @JANSSON_LIBS@ @PTHREAD_LIBS@ @WS2_LIBS@ @OPENSSL_LIBS@ @MATH_LIBS@
 minerd_CPPFLAGS = @LIBCURL_CPPFLAGS@
