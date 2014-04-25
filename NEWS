@@ -1,3 +1,7 @@
+Version 2.3.4 - April 25, 2014
+
+- Added Dcrypt algorithm support for Slimcoin
+
 Version 2.3.3 - Feb 27, 2014
 
 - The --url option is now mandatory

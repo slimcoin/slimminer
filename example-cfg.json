@@ -6,8 +6,8 @@
 	"user" : "rpcuser",
 	"pass" : "rpcpass",
 
-	"algo" : "scrypt",
-	"threads" : "4",
+	"algo" : "dcrypt",
+	"threads" : "8",
 
 	"quiet" : true
 }
