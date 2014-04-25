@@ -2,7 +2,7 @@
 	"_comment1" : "Any long-format command line argument ",
 	"_comment2" : "may be used in this JSON configuration file",
 
-	"url" : "http://127.0.0.1:9332/",
+	"url" : "http://127.0.0.1:41683/",
 	"user" : "rpcuser",
 	"pass" : "rpcpass",
 

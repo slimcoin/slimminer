@@ -9,7 +9,7 @@ Git tree:   https://github.com/pooler/cpuminer
 Dependencies:
 	libcurl-*-dev		http://curl.haxx.se/libcurl/
 	libjansson			http://www.digip.org/jansson/
-    autoconf            https://www.gnu.org/software/autoconf/
+   	autoconf        		https://www.gnu.org/software/autoconf/
 		(jansson is included in-tree)
 
 Basic *nix build instructions:

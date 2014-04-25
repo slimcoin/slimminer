@@ -799,8 +799,8 @@ static void *miner_thread(void *userdata)
 
     case ALGO_DCRYPT:
 
-      //take that work, and swap everything but the nonce
-      // as dcrypt does not swap internally
+      //take that work, and swap endians of everything but the nonce since the nonce is set with the correct
+      // endianess above, this is done as dcrypt does not swap internally
       for(i = 0; i < 19; i++)
         work.data[i] = swab32(work.data[i]);
 
