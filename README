@@ -7,9 +7,9 @@ Downloads:  https://sourceforge.net/projects/cpuminer/files/
 Git tree:   https://github.com/pooler/cpuminer
 
 Dependencies:
-	libcurl			http://curl.haxx.se/libcurl/
-	libcurl-dev
-	jansson			http://www.digip.org/jansson/
+	libcurl-*-dev		http://curl.haxx.se/libcurl/
+	libjansson			http://www.digip.org/jansson/
+    autoconf            https://www.gnu.org/software/autoconf/
 		(jansson is included in-tree)
 
 Basic *nix build instructions:
@@ -17,6 +17,11 @@ Basic *nix build instructions:
 	./nomacro.pl	# only needed if building on Mac OS X or with Clang
 	./configure CFLAGS="-O3"
 	make
+
+Developed and Tested using:
+    libcurl4-openssl-dev  version 7.32.0
+    libjansson4           version 2.4
+    autoconf              version 2.69
 
 Notes for AIX users:
 	* To build a 64-bit binary, export OBJECT_MODE=64
