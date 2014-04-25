@@ -451,11 +451,11 @@ char *bin2hex(const unsigned char *p, size_t len)
 {
   int i;
   char *s = malloc((len * 2) + 1);
-  if (!s)
+  if(!s)
     return NULL;
 
-  for (i = 0; i < len; i++)
-    sprintf(s + (i * 2), "%02x", (unsigned int) p[i]);
+  for(i = 0; i < len; i++)
+    sprintf(s + (i * 2), "%02x", (unsigned int)p[i]);
 
   return s;
 }

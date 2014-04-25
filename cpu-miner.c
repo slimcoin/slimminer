@@ -294,6 +294,7 @@ static bool work_decode(const json_t *val, struct work *work)
     goto err_out;
   }
 
+  //convert edianess, big edian to little edian
   for(i = 0; i < ARRAY_SIZE(work->data); i++)
     work->data[i] = le32dec(work->data + i);
   for(i = 0; i < ARRAY_SIZE(work->target); i++)
@@ -338,14 +339,17 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
   int i;
   bool rc = false;
 
-  /* pass if the previous hash is not the current previous hash */
-  if (!submit_old && memcmp(work->data + 1, g_work.data + 1, 32)) {
-    if (opt_debug)
+  /*pass if the previous hash is not the current previous hash
+   * the only exception being the DCrypt algorithm*/
+  if(opt_algo != ALGO_DCRYPT && !submit_old && memcmp(work->data + 1, g_work.data + 1, 32)) 
+  {
+    if(opt_debug)
       applog(LOG_DEBUG, "DEBUG: stale work detected, discarding");
     return true;
   }
 
-  if (have_stratum) {
+  if(have_stratum) 
+  {
     uint32_t ntime, nonce;
     char *ntimestr, *noncestr, *xnonce2str;
 
@@ -354,35 +358,44 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
     ntimestr = bin2hex((const unsigned char *)(&ntime), 4);
     noncestr = bin2hex((const unsigned char *)(&nonce), 4);
     xnonce2str = bin2hex(work->xnonce2, work->xnonce2_len);
-    sprintf(s,
-			"{\"method\": \"mining.submit\", \"params\": [\"%s\", \"%s\", \"%s\", \"%s\", \"%s\"], \"id\":4}",
+
+    sprintf(s, "{\"method\": \"mining.submit\", \"params\": [\"%s\", \"%s\", \"%s\", \"%s\", \"%s\"], \"id\":4}",
 			rpc_user, work->job_id, xnonce2str, ntimestr, noncestr);
+
     free(ntimestr);
     free(noncestr);
     free(xnonce2str);
 
-    if (unlikely(!stratum_send_line(&stratum, s))) {
+    if(unlikely(!stratum_send_line(&stratum, s)))
+    {
       applog(LOG_ERR, "submit_upstream_work stratum_send_line failed");
       goto out;
     }
-  } else {
-    /* build hex string */
-    for (i = 0; i < ARRAY_SIZE(work->data); i++)
-      le32enc(work->data + i, work->data[i]);
+  }else{
+    //encode to big edian if using DCRYPT, else, little edian
+    if(opt_algo == ALGO_DCRYPT)
+    {
+      for(i = 0; i < ARRAY_SIZE(work->data); i++)
+        be32enc(work->data + i, work->data[i]);
+    }else{
+      for(i = 0; i < ARRAY_SIZE(work->data); i++)
+        le32enc(work->data + i, work->data[i]);
+    }
+
     str = bin2hex((unsigned char *)work->data, sizeof(work->data));
-    if (unlikely(!str)) {
+    if(unlikely(!str))
+    {
       applog(LOG_ERR, "submit_upstream_work OOM");
       goto out;
     }
 
     /* build JSON-RPC request */
-    sprintf(s,
-			"{\"method\": \"getwork\", \"params\": [ \"%s\" ], \"id\":1}\r\n",
-			str);
+	sprintf(s, "{\"method\": \"getwork\", \"params\": [ \"%s\" ], \"id\":1}\r\n", str);
 
     /* issue JSON-RPC request */
     val = json_rpc_call(curl, rpc_url, rpc_userpass, s, false, false, NULL);
-    if (unlikely(!val)) {
+    if(unlikely(!val))
+    {
       applog(LOG_ERR, "submit_upstream_work json_rpc_call failed");
       goto out;
     }
@@ -479,7 +492,7 @@ static bool workio_get_work(struct workio_cmd *wc, CURL *curl)
   }
 
   /* send work to requesting thread */
-  if (!tq_push(wc->thr->q, ret_work))
+  if(!tq_push(wc->thr->q, ret_work))
     free(ret_work);
 
   return true;
@@ -490,15 +503,16 @@ static bool workio_submit_work(struct workio_cmd *wc, CURL *curl)
   int failures = 0;
 
   /* submit solution to bitcoin via JSON-RPC */
-  while (!submit_upstream_work(curl, wc->u.work)) {
-    if (unlikely((opt_retries >= 0) && (++failures > opt_retries))) {
+  while(!submit_upstream_work(curl, wc->u.work)) 
+  {
+    if(unlikely((opt_retries >= 0) && (++failures > opt_retries))) 
+    {
       applog(LOG_ERR, "...terminating workio thread");
       return false;
     }
 
     /* pause, then restart work-request loop */
-    applog(LOG_ERR, "...retry after %d seconds",
-           opt_fail_pause);
+    applog(LOG_ERR, "...retry after %d seconds", opt_fail_pause);
     sleep(opt_fail_pause);
   }
 
@@ -539,7 +553,6 @@ static void *workio_thread(void *userdata)
     case WC_SUBMIT_WORK:
       ok = workio_submit_work(wc, curl);
       break;
-
     default:		/* should never happen */
       ok = false;
       break;
@@ -561,6 +574,7 @@ static bool get_work(struct thr_info *thr, struct work *work)
 
   if(opt_benchmark)
   {
+    //pseudo data for benchmark
     memset(work->data, 0x55, 76);
     work->data[17] = swab32(time(NULL));
     memset(work->data + 19, 0x00, 52);
@@ -607,7 +621,7 @@ static bool submit_work(struct thr_info *thr, const struct work *work_in)
     return false;
 
   wc->u.work = malloc(sizeof(*work_in));
-  if (!wc->u.work)
+  if(!wc->u.work)
     goto err_out;
 
   wc->cmd = WC_SUBMIT_WORK;
@@ -615,7 +629,7 @@ static bool submit_work(struct thr_info *thr, const struct work *work_in)
   memcpy(wc->u.work, work_in, sizeof(*work_in));
 
   /* send solution to workio thread */
-  if (!tq_push(thr_info[work_thr_id].q, wc))
+  if(!tq_push(thr_info[work_thr_id].q, wc))
     goto err_out;
 
   return true;
@@ -680,7 +694,7 @@ static void *miner_thread(void *userdata)
   struct work work;
   uint32_t max_nonce;
   uint32_t end_nonce = 0xffffffffU / opt_n_threads * (thr_id + 1) - 0x20;
-  unsigned char *scratchbuf = NULL;
+  u8int *scratchbuf = NULL, *dcryptDigest = NULL;
   char s[16];
   int i;
 
@@ -694,15 +708,17 @@ static void *miner_thread(void *userdata)
 
   /* Cpu affinity only makes sense if the number of threads is a multiple
    * of the number of CPUs */
-  if (num_processors > 1 && opt_n_threads % num_processors == 0) {
-    if (!opt_quiet)
-      applog(LOG_INFO, "Binding thread %d to cpu %d",
-             thr_id, thr_id % num_processors);
+  if(num_processors > 1 && opt_n_threads % num_processors == 0) 
+  {
+    if(!opt_quiet)
+      applog(LOG_INFO, "Binding thread %d to cpu %d", thr_id, thr_id % num_processors);
     affine_to_cpu(thr_id, thr_id % num_processors);
   }
 	
   if(opt_algo == ALGO_SCRYPT)
     scratchbuf = scrypt_buffer_alloc();
+  else if(opt_algo == ALGO_DCRYPT)
+    dcryptDigest = dcrypt_buffer_alloc();
 
   for(;;)
   {
@@ -760,7 +776,7 @@ static void *miner_thread(void *userdata)
     max64 *= thr_hashrates[thr_id];
 
     if(max64 <= 0)
-      max64 = opt_algo == ALGO_SCRYPT ? 0xfffLL : 0x1fffffLL;
+      max64 = opt_algo == ALGO_SHA256D ? 0x1fffffLL :  0xfffLL;
 
     if(work.data[19] + max64 > end_nonce)
       max_nonce = end_nonce;
@@ -782,7 +798,13 @@ static void *miner_thread(void *userdata)
       break;
 
     case ALGO_DCRYPT:
-      printf("THIS IS DCRYPT hashing!\n");
+
+      //take that work, and swap everything but the nonce
+      // as dcrypt does not swap internally
+      for(i = 0; i < 19; i++)
+        work.data[i] = swab32(work.data[i]);
+
+      rc = scanhash_dcrypt(thr_id, work.data, dcryptDigest, work.target, max_nonce, &hashes_done);
       break;
 
     default:
@@ -796,8 +818,7 @@ static void *miner_thread(void *userdata)
     if(diff.tv_usec || diff.tv_sec) 
     {
       pthread_mutex_lock(&stats_lock);
-      thr_hashrates[thr_id] =
-        hashes_done / (diff.tv_sec + 1e-6 * diff.tv_usec);
+      thr_hashrates[thr_id] = hashes_done / (diff.tv_sec + 1e-6 * diff.tv_usec);
       pthread_mutex_unlock(&stats_lock);
     }
 
@@ -812,7 +833,8 @@ static void *miner_thread(void *userdata)
       double hashrate = 0.;
       for (i = 0; i < opt_n_threads && thr_hashrates[i]; i++)
         hashrate += thr_hashrates[i];
-      if (i == opt_n_threads) {
+      if(i == opt_n_threads)
+      {
         sprintf(s, hashrate >= 1e6 ? "%.0f" : "%.2f", 1e-3 * hashrate);
         applog(LOG_INFO, "Total: %s khash/s", s);
       }
@@ -1301,7 +1323,8 @@ int main(int argc, char *argv[])
   /* parse command line */
   parse_cmdline(argc, argv);
 
-  if (!opt_benchmark && !rpc_url) {
+  if (!opt_benchmark && !rpc_url)
+  {
     fprintf(stderr, "%s: no URL supplied\n", argv[0]);
     show_usage_and_exit(1);
   }

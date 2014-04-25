@@ -16,4 +16,6 @@ int scanhash_dcrypt(int thr_id, uint32_t *pdata,
                     unsigned char *digest, const uint32_t *ptarget,
                     uint32_t max_nonce, unsigned long *hashes_done);
 
+u8int *dcrypt_buffer_alloc();
+
 #endif

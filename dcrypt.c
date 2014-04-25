@@ -146,6 +146,11 @@ uint64 mix_hashed_nums(uint8_t *hashed_nums, const uint8_t *unhashedData, size_t
   return count * SHA256_LEN + unhashed_sz;
 }
 
+u8int *dcrypt_buffer_alloc()
+{
+  return malloc(DCRYPT_DIGEST_LENGTH);
+}
+
 void dcrypt(const uint8_t *data, size_t data_sz, uint8_t *hash_digest, u32int *hashRet)
 {
   uint8_t hashed_nums[SHA256_LEN + 1], *mix_hash;
@@ -183,7 +188,6 @@ int scanhash_dcrypt(int thr_id, uint32_t *pdata,
   const uint32_t Htarg = ptarget[7]; //the last element in the target is the first 32 bits of the target
   int i;
 	
-  //i am hashing pdata's 80 bytes
   //copy the block (first 80 bytes of pdata) into block
   memcpy(block, pdata, 80);
 
@@ -205,8 +209,7 @@ int scanhash_dcrypt(int thr_id, uint32_t *pdata,
       return 1;
     }
 
-  }while(nNonce < max_nonce);
-  //}while(nNonce < max_nonce && !work_restart[thr_id].restart);
+  }while(nNonce < max_nonce && !work_restart[thr_id].restart);
 	
   *hashes_done = nNonce - pdata[19] + 1;
   pdata[19] = nNonce;
