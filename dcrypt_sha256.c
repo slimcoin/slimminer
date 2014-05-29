@@ -12,26 +12,20 @@ void digest_to_string(u8int *hash_digest, u8int *string)
 {
   register u8int tmp_val;
 
-  uint32_t i = 0;
+  uint8_t i = 0, *ps;
   for(; i < SHA256_DIGEST_LENGTH; i++)
   {
-    //format the most (left-most) significant 4bit hex
+	ps = string + i * 2;
     tmp_val = *(hash_digest + i) >> 4;
-
-    //get the integer into a char
-    if(tmp_val <= 9)
-      *(string + (i * 2)) = tmp_val + '0';
-    else //add 87 to get the integer into the a-f of a hex
-      *(string + (i * 2)) = tmp_val + 87; //ex: if tmp_val == 10 (0xa) then + 87 equals char 'a'
-
-    //format the least (right-most) significant 4bit hex
-    tmp_val = *(hash_digest + i) & 0x0F;
-
-    //get the integer into a char
-    if(tmp_val <= 9)
-      *(string + (i * 2) + 1) = tmp_val + '0';
-    else //add 87 to get the integer into the a-f of a hex
-      *(string + (i * 2) + 1) = tmp_val + 87; //ex: if tmp_val == 10 (0xa) then + 87 equals char 'a'
+    if(tmp_val < 10)
+      *ps = tmp_val + 48;
+    else
+      *ps = tmp_val + 87;
+    tmp_val = *(hash_digest + i) & 0xf;
+    if(tmp_val < 10)
+      *(ps + 1) = tmp_val + 48;
+    else
+      *(ps + 1) = tmp_val + 87;
 
   }
 
