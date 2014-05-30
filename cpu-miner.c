@@ -127,7 +127,7 @@ static bool opt_quiet = false;
 static int opt_retries = -1;
 static int opt_fail_pause = 30;
 int opt_timeout = 270;
-static int opt_scantime = 5;
+static int opt_scantime = 1;
 static json_t *opt_config;
 static const bool opt_time = true;
 static enum sha256_algos opt_algo = ALGO_DCRYPT;
@@ -255,6 +255,7 @@ struct work {
 
 static struct work g_work;
 static time_t g_work_time;
+static time_t g_block_time = 0;
 static pthread_mutex_t g_work_lock;
 
 static bool jobj_binary(const json_t *obj, const char *key,
@@ -414,39 +415,78 @@ out:
   return rc;
 }
 
+static int block_count = 0;
+
 static const char *rpc_req =
   "{\"method\": \"getwork\", \"params\": [], \"id\":0}\r\n";
+  static const char *rpc_info =
+  "{\"method\": \"getinfo\", \"params\": [], \"id\":0}\r\n";
 
 static bool get_upstream_work(CURL *curl, struct work *work)
 {
-  json_t *val;
+  json_t *val, *info, *blocks;
   bool rc;
   struct timeval tv_start, tv_end, diff;
-
-  gettimeofday(&tv_start, NULL);
-  val = json_rpc_call(curl, rpc_url, rpc_userpass, rpc_req, want_longpoll, false, NULL);
-  gettimeofday(&tv_end, NULL);
-
-  if(have_stratum)
+  uint32_t count;
+  bool refresh = false;
+  if(time(NULL) >= g_block_time + 60)
   {
-    if(val)
-      json_decref(val);
-    return true;
+	applog(LOG_INFO, "Refreshing work", count);
+	refresh = true;
   }
-
-  if(!val)
-    return false;
-
-  rc = work_decode(json_object_get(val, "result"), work);
-
-  if(opt_debug && rc) 
+  else
   {
-    timeval_subtract(&diff, &tv_end, &tv_start);
-    applog(LOG_DEBUG, "DEBUG: got new work in %d ms", diff.tv_sec * 1000 + diff.tv_usec / 1000);
+	info = json_rpc_call(curl, rpc_url, rpc_userpass, rpc_info, want_longpoll, false, NULL);
+	if(!info)
+		return false;
+	info = json_object_get(info, "result");
+	if(!info)
+		return false;
+	blocks = json_object_get(info, "blocks");
+	if(!blocks || !json_is_integer(blocks))
+		return false;
+	count = json_integer_value(blocks);
+
+	json_decref(info);
+	if(count > block_count)
+	{
+		applog(LOG_INFO, "New block #%d detected", count);
+		block_count = count;
+		refresh = true;
+	}
   }
+  if(refresh)
+  {
+  	gettimeofday(&tv_start, NULL);
+	val = json_rpc_call(curl, rpc_url, rpc_userpass, rpc_req, want_longpoll, false, NULL);
+	gettimeofday(&tv_end, NULL);
 
-  json_decref(val);
+	if(have_stratum)
+	{
+		if(val)
+		json_decref(val);
+		return true;
+	}
 
+	if(!val)
+		return false;
+
+	rc = work_decode(json_object_get(val, "result"), work);
+
+	if(opt_debug && rc) 
+	{
+		timeval_subtract(&diff, &tv_end, &tv_start);
+		applog(LOG_DEBUG, "DEBUG: got new work in %d ms", diff.tv_sec * 1000 + diff.tv_usec / 1000);
+		g_block_time = time(NULL);
+	}
+	
+	json_decref(val);
+  }
+  else
+  {
+	rc = true;
+	work = &g_work;
+  }
   return rc;
 }
 
@@ -776,7 +816,7 @@ static void *miner_thread(void *userdata)
     max64 *= thr_hashrates[thr_id];
 
     if(max64 <= 0)
-      max64 = opt_algo == ALGO_SHA256D ? 0x1fffffLL :  0xfffLL;
+      max64 = 0xfffLL;
 
     if(work.data[19] + max64 > end_nonce)
       max_nonce = end_nonce;
@@ -825,7 +865,7 @@ static void *miner_thread(void *userdata)
     if(!opt_quiet) 
     {
       sprintf(s, thr_hashrates[thr_id] >= 1e6 ? "%.0f" : "%.2f", 1e-3 * thr_hashrates[thr_id]);
-      applog(LOG_INFO, "thread %d: %lu hashes, %s khash/s", thr_id, hashes_done, s);
+      applog(LOG_INFO, "thread %d: %lu hashes, %s khash/s %08x", thr_id, hashes_done, s, work.data[19]);
     }
 
     if(opt_benchmark && thr_id == opt_n_threads - 1) 
