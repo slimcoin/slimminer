@@ -10,7 +10,7 @@
 #include "dcrypt.h"
 
 //the base size for malloc/realloc will be 1KB
-#define REALLOC_BASE_SZ   (8192)
+#define REALLOC_BASE_SZ   (1024)
 
 typedef struct
 {
