@@ -479,6 +479,8 @@ static bool get_upstream_work(CURL *curl, struct work *work)
 		applog(LOG_DEBUG, "DEBUG: got new work in %d ms", diff.tv_sec * 1000 + diff.tv_usec / 1000);
 		g_block_time = time(NULL);
 	}
+	if(rc)
+		g_block_time = time(NULL);
 	
 	json_decref(val);
   }
