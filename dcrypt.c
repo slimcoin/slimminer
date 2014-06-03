@@ -123,10 +123,10 @@ uint64 mix_hashed_nums(uint8_t *hashed_nums, const uint8_t *unhashedData, size_t
     //check if the last value of hashed_nums is the same as the last value in tmp_array
     if(index == hashed_nums_len - 1 && tmp_val == *(tmp_array + SHA256_LEN - 1))
 	{
-        //add to count since we extended the array, but break will exit the for loop and count
-        // will not get incremenented by the for loop
-        count++;
-        break;
+      //add to count since we extended the array, but break will exit the for loop and count
+      // will not get incremenented by the for loop
+      count++;
+      break;
 	}
   }
 
@@ -216,59 +216,59 @@ int scanhash_dcrypt(int thr_id, uint32_t *pdata,
 
 /* Tests the comparison to two hashes
 
-  //Hash the word "Dog" with Dcrypt and strinify the hash
-  u32int ret[8];
-  char string[65];
-  dcrypt("Dog", 3, 0, ret);
-  digest_to_string((u8int*)ret, string);
-  printf("String is %s\n", string);
+//Hash the word "Dog" with Dcrypt and strinify the hash
+u32int ret[8];
+char string[65];
+dcrypt("Dog", 3, 0, ret);
+digest_to_string((u8int*)ret, string);
+printf("String is %s\n", string);
 
-  //hash the word "Doge" with Dcrypt and stringify the hash
-  u32int ret2[8];
-  char string2[65];
-  dcrypt("Doge", 4, 0, ret2);
-  digest_to_string((u8int*)ret2, string2);
-  printf("String2 is %s\n", string2);
+//hash the word "Doge" with Dcrypt and stringify the hash
+u32int ret2[8];
+char string2[65];
+dcrypt("Doge", 4, 0, ret2);
+digest_to_string((u8int*)ret2, string2);
+printf("String2 is %s\n", string2);
 
-  //compare the last elements, which correspond the the uint256's first 32 bytes
-  if(ret[7] < ret2[7])
-    printf("String1 is smaller %08x < %08x\n", ret[7], ret2[7]);
-  else
-    printf("String1 is greater %08x >= %08x\n", ret[7], ret2[7]);
+//compare the last elements, which correspond the the uint256's first 32 bytes
+if(ret[7] < ret2[7])
+printf("String1 is smaller %08x < %08x\n", ret[7], ret2[7]);
+else
+printf("String1 is greater %08x >= %08x\n", ret[7], ret2[7]);
 
-  //Apply the full test to make sure
-  printf("Full test returns %d\n", fulltest(ret2, ret));
+//Apply the full test to make sure
+printf("Full test returns %d\n", fulltest(ret2, ret));
 
- */
+*/
 
 /* Tests the scan feature of dcrypt
-  u8int digest[DCRYPT_DIGEST_LENGTH], string[65], strTarget[65];
-  unsigned long hDone;
-  u32int pdata[20], retHash[8], target[8];
+   u8int digest[DCRYPT_DIGEST_LENGTH], string[65], strTarget[65];
+   unsigned long hDone;
+   u32int pdata[20], retHash[8], target[8];
 
-  //fill pdata with something
-  memset(pdata, 0xff, 20 * sizeof(u32int));
-  pdata[19] = 0; //element 19 is the beginning of where nNonce begins
+   //fill pdata with something
+   memset(pdata, 0xff, 20 * sizeof(u32int));
+   pdata[19] = 0; //element 19 is the beginning of where nNonce begins
 
-  //fill the target with 1's
-  memset(target, 0xff, 8 * sizeof(u32int));
-  //the last element is the uint256's first 32 bits, set the target to 0x00000ffffffffff....
-  target[7] = 0x000ffff;
+   //fill the target with 1's
+   memset(target, 0xff, 8 * sizeof(u32int));
+   //the last element is the uint256's first 32 bits, set the target to 0x00000ffffffffff....
+   target[7] = 0x000ffff;
 
-  //scan for them hashes
-  scanhash_dcrypt(0, pdata, digest, target, -1, &hDone);
+   //scan for them hashes
+   scanhash_dcrypt(0, pdata, digest, target, -1, &hDone);
 
-  //Get the hash of pdata
-  dcrypt((u8int*)pdata, 80, digest, retHash);
+   //Get the hash of pdata
+   dcrypt((u8int*)pdata, 80, digest, retHash);
 
-  //stringify the returned hash and the target
-  digest_to_string((u8int*)retHash, string);
-  digest_to_string((u8int*)target, strTarget);
+   //stringify the returned hash and the target
+   digest_to_string((u8int*)retHash, string);
+   digest_to_string((u8int*)target, strTarget);
 
-  printf("  Hash is %s %08x\n", string, retHash[7]);
-  printf("Target is %s %08x\n", strTarget, target[7]);
-  printf("Nonce %d Hashes Done %ld\n", pdata[19], hDone);
- */
+   printf("  Hash is %s %08x\n", string, retHash[7]);
+   printf("Target is %s %08x\n", strTarget, target[7]);
+   printf("Nonce %d Hashes Done %ld\n", pdata[19], hDone);
+*/
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////

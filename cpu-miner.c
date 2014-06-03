@@ -808,8 +808,8 @@ static void *miner_thread(void *userdata)
 	  
 	  if(have_stratum)
 	  {
-		  for(i = 0; i < 19; i++)
-			work.data[i] = swab32(work.data[i]);
+        for(i = 0; i < 19; i++)
+          work.data[i] = swab32(work.data[i]);
 	  }
       break;
 
