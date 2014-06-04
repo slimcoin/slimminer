@@ -806,11 +806,12 @@ static void *miner_thread(void *userdata)
 
       rc = scanhash_dcrypt(thr_id, work.data, dcryptDigest, work.target, max_nonce, &hashes_done);
 	  
-	  if(have_stratum)
-	  {
-		  for(i = 0; i < 19; i++)
-			work.data[i] = swab32(work.data[i]);
-	  }
+		if(have_stratum)
+		{
+			for(i = 0; i < 20; i++)
+				work.data[i] = swab32(work.data[i]);
+		}
+
       break;
 
     default:
